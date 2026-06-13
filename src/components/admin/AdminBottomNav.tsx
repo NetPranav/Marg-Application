@@ -1,27 +1,30 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Home, Navigation, MessageSquare, FileText, RotateCcw, User } from "lucide-react";
+import {
+  LayoutDashboard, Truck, ShoppingCart, Navigation, BarChart3,
+  Bell, MessageSquare, AlertTriangle
+} from "lucide-react";
 import { clsx } from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const tabs = [
-  { id: "home", label: "Home", icon: Home, href: "/" },
-  { id: "trip", label: "Trip", icon: Navigation, href: "/cargo" },
-  { id: "messages", label: "Messages", icon: MessageSquare, href: "/gate" },
-  { id: "docs", label: "Docs", icon: FileText, href: "/market" },
-  { id: "return", label: "Returns", icon: RotateCcw, href: "/earnings" },
+  { id: "dashboard", label: "HQ", icon: LayoutDashboard, href: "/admin/dashboard" },
+  { id: "fleet", label: "Fleet", icon: Truck, href: "/admin/fleet/vehicles" },
+  { id: "marketplace", label: "Market", icon: ShoppingCart, href: "/admin/marketplace/requests" },
+  { id: "transit", label: "Transit", icon: Navigation, href: "/admin/transit/active" },
+  { id: "alerts", label: "Alerts", icon: AlertTriangle, href: "/admin/exceptions/alerts" },
 ];
 
-export default function BottomNav() {
+export default function AdminBottomNav() {
   const pathname = usePathname();
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] z-50">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[420px] z-50 md:hidden">
       <div className="bg-[#312E2D] rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.12)] p-2 flex items-center justify-between relative">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href || (pathname === "/" && tab.id === "home");
+          const isActive = pathname.startsWith(tab.href.split("/").slice(0, 3).join("/"));
           const Icon = tab.icon;
 
           return (
@@ -35,7 +38,7 @@ export default function BottomNav() {
             >
               {isActive && (
                 <motion.div
-                  layoutId="active-pill"
+                  layoutId="admin-active-pill"
                   className="absolute inset-0 bg-[#C15B2B] rounded-[1.5rem]"
                   initial={false}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}

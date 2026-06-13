@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthProvider from "@/components/providers/AuthProvider";
+import RealtimeProvider from "@/components/providers/RealtimeProvider";
 
 export const metadata: Metadata = {
-  title: "TransitFlow HUD",
-  description: "Active Transit HUD for Driver Operations",
+  title: "Marg OS",
+  description: "Enterprise Logistics Operating System",
 };
 
 export default function RootLayout({
@@ -13,8 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen pb-24 relative overflow-x-hidden">
-        {children}
+      <body className="antialiased min-h-screen relative overflow-x-hidden bg-brand-bg text-brand-text">
+        <AuthProvider>
+          <RealtimeProvider>
+            {children}
+          </RealtimeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

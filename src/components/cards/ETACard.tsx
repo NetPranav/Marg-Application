@@ -1,9 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useRealtimeStore } from "@/store/realtimeStore";
 
 export default function ETACard() {
-  // Mock telemetry data
+  const activeShipments = useRealtimeStore((state) => state.activeShipments);
+  
+  // For a driver, there is typically only 1 active shipment assignment
+  const currentShipment = activeShipments[0];
+
+  const destination = currentShipment?.warehouse_name || "Bhiwandi Central Hub";
+  const origin = currentShipment?.factory_name || "Pune Factory";
+  
+  // Mock telemetry data for ETA (we would calculate this from distance in production)
   const progressPercent = 70; 
 
   return (
@@ -17,7 +26,7 @@ export default function ETACard() {
         
         {/* Destination Header */}
         <div className="text-[10px] font-bold tracking-widest text-brand-text/60 uppercase">
-          Destination: Warehouse Bay 04
+          Destination: {destination}
         </div>
 
         {/* ETA Section */}
@@ -56,8 +65,8 @@ export default function ETACard() {
 
         {/* Footer Info */}
         <div className="flex justify-between items-center text-xs font-medium text-brand-text/60">
-          <span>Origin: Chicago Dpt</span>
-          <span>Distance: 184 mi left</span>
+          <span>Origin: {origin}</span>
+          <span>Distance: 184 km left</span>
         </div>
       </div>
     </motion.div>
