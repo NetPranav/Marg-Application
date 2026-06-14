@@ -2,8 +2,13 @@
 
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
+import { useRealtimeStore } from "@/store/realtimeStore";
 
 export default function ManifestSummary() {
+  const activeShipments = useRealtimeStore((state) => state.activeShipments);
+  const currentShipment = activeShipments[0];
+  const manifestId = currentShipment?.shipment_number || "Loading...";
+  const ewayBill = currentShipment ? `EWB-${String(currentShipment.id).split('-')[0].toUpperCase()}-${Math.floor(Math.random() * 1000)}` : "Loading...";
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -33,7 +38,7 @@ export default function ManifestSummary() {
             Manifest ID
           </span>
           <span className="text-3xl font-semibold tracking-tight text-brand-text">
-            MX-88241
+            {manifestId}
           </span>
         </div>
 
@@ -44,7 +49,7 @@ export default function ManifestSummary() {
             E-Way Bill
           </span>
           <span className="text-2xl font-semibold tracking-tight text-brand-text/90">
-            EW-7782-AB-992
+            {ewayBill}
           </span>
         </div>
       </div>

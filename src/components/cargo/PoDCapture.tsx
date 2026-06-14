@@ -1,9 +1,33 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Lock, UploadCloud, PenTool } from "lucide-react";
+import { Lock, UploadCloud, PenTool, CheckCircle } from "lucide-react";
+import { useRealtimeStore } from "@/store/realtimeStore";
+import api from "@/lib/api";
+import { useState } from "react";
 
 export default function PoDCapture() {
+  const activeShipments = useRealtimeStore((state) => state.activeShipments);
+  const updateShipment = useRealtimeStore((state) => state.updateShipment);
+  const currentShipment = activeShipments[0];
+  const [submitting, setSubmitting] = useState(false);
+
+  const canCapture = currentShipment?.status === "ARRIVED_AT_GATE" || currentShipment?.status === "UNLOADING";
+  const isCompleted = currentShipment?.status === "COMPLETED";
+
+  const handleComplete = async () => {
+    if (!currentShipment) return;
+    setSubmitting(true);
+    try {
+      await api.post(`/shipments/${currentShipment.id}/complete/`);
+      updateShipment({ ...currentShipment, status: "COMPLETED" });
+      alert("Shipment completed successfully!");
+    } catch (err: any) {
+      alert("Failed to complete shipment: " + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -15,23 +39,42 @@ export default function PoDCapture() {
         <span className="text-[10px] font-bold tracking-[0.2em] text-brand-text/50 uppercase">
           Proof of Delivery
         </span>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#FDEFE8] text-[#C15B2B] rounded-md">
-          <Lock className="w-3 h-3" />
-          <span className="text-[9px] font-bold tracking-widest uppercase">Geofence Locked</span>
-        </div>
+        {isCompleted ? (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-600 rounded-md">
+            <CheckCircle className="w-3 h-3" />
+            <span className="text-[9px] font-bold tracking-widest uppercase">Completed</span>
+          </div>
+        ) : canCapture ? (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-md">
+            <PenTool className="w-3 h-3" />
+            <span className="text-[9px] font-bold tracking-widest uppercase">Unlocked</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#FDEFE8] text-[#C15B2B] rounded-md">
+            <Lock className="w-3 h-3" />
+            <span className="text-[9px] font-bold tracking-widest uppercase">Geofence Locked</span>
+          </div>
+        )}
       </div>
 
-      <p className="text-sm font-medium text-brand-text/60 leading-relaxed mb-6">
-        PoD capture unlocks automatically once vehicle enters assigned unloading dock geofence.
-      </p>
+      {!canCapture && !isCompleted && (
+        <p className="text-sm font-medium text-brand-text/60 leading-relaxed mb-6">
+          PoD capture unlocks automatically once vehicle enters assigned unloading dock geofence (Arrived at Gate).
+        </p>
+      )}
 
-      {/* Disabled Upload Button */}
+      {/* Upload Button */}
       <button 
-        disabled 
-        className="w-full flex items-center justify-center gap-2 py-4 mb-4 bg-[#FDF5F1]/50 text-brand-text/30 border border-[#FDF5F1] rounded-2xl font-semibold opacity-60 cursor-not-allowed"
+        disabled={!canCapture || submitting || isCompleted} 
+        onClick={handleComplete}
+        className={`w-full flex items-center justify-center gap-2 py-4 mb-4 rounded-2xl font-semibold transition-all ${
+          canCapture && !isCompleted 
+            ? 'bg-brand-primary text-white shadow-glow hover:bg-brand-primary/90' 
+            : 'bg-[#FDF5F1]/50 text-brand-text/30 border border-[#FDF5F1] opacity-60 cursor-not-allowed'
+        }`}
       >
         <UploadCloud className="w-5 h-5" />
-        Upload Signed Receipt
+        {submitting ? "Submitting..." : isCompleted ? "Completed" : "Submit PoD & Complete"}
       </button>
 
       {/* Signature Canvas Placeholder */}

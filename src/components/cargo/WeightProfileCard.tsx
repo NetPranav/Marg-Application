@@ -2,8 +2,12 @@
 
 import { motion } from "framer-motion";
 import { Scale, CheckCircle2 } from "lucide-react";
+import { useRealtimeStore } from "@/store/realtimeStore";
 
 export default function WeightProfileCard() {
+  const activeShipments = useRealtimeStore((state) => state.activeShipments);
+  const currentShipment = activeShipments[0];
+  const weight = currentShipment?.total_weight_kg ? (currentShipment.total_weight_kg / 1000).toFixed(1) : "24.5";
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -20,7 +24,7 @@ export default function WeightProfileCard() {
 
       <div className="flex justify-between items-end mb-6">
         <div className="flex flex-col">
-          <span className="text-3xl font-light tracking-tight text-brand-text">24.5</span>
+          <span className="text-3xl font-light tracking-tight text-brand-text">{weight}</span>
           <span className="text-[9px] font-bold tracking-widest text-brand-text/50 uppercase">Tons</span>
         </div>
         <div className="flex flex-col">

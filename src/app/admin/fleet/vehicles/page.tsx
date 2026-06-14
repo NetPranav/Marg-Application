@@ -46,8 +46,9 @@ export default function VehiclesPage() {
       await api.post("/trucks/", {
         registration_number: form.registration_number,
         vehicle_type: form.vehicle_type,
-        capacity_tons: parseFloat(form.capacity_tons) || 10,
+        capacity_kg: (parseFloat(form.capacity_tons) || 10) * 1000,
         status: form.status,
+        ...(form.assigned_driver ? { assigned_driver: parseInt(form.assigned_driver) } : {}),
       });
       setShowForm(false);
       setForm({ registration_number: "", vehicle_type: "TRUCK", capacity_tons: "", fuel_type: "DIESEL", assigned_driver: "", status: "AVAILABLE" });
@@ -129,7 +130,7 @@ export default function VehiclesPage() {
               <label className="text-xs text-brand-muted font-medium uppercase tracking-wider">Assigned Driver</label>
               <select value={form.assigned_driver} onChange={(e) => setForm({ ...form, assigned_driver: e.target.value })} className="w-full mt-1 px-3 py-2 bg-brand-bg border border-black/[0.06] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/30">
                 <option value="">Unassigned</option>
-                {drivers.map((d: any) => <option key={d.id} value={d.id}>{d.first_name} {d.last_name}</option>)}
+                {drivers.map((d: any) => <option key={d.id} value={d.id}>{d.user_name || `Driver #${d.id}`}</option>)}
               </select>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Truck, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/api';
 
 export default function DriverLoginPage() {
   const [email, setEmail] = useState('');
@@ -19,11 +20,14 @@ export default function DriverLoginPage() {
     setError('');
 
     try {
-      await login(email, password);
+      const response = await api.post('/auth/login/', { email, password });
+      const { access, refresh, user } = response.data;
+      
+      login(access, refresh, user);
       // Middleware will handle redirection based on token role, but we can proactively route
       router.push('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid credentials');
+      setError(err.response?.data?.detail || err.response?.data?.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }

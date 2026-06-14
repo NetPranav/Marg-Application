@@ -18,24 +18,40 @@ export default function MaintenancePage() {
     } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
-  // Generate maintenance data from vehicle data
+  const handleDateChange = async (id: number, field: string, dateStr: string) => {
+    try {
+      await api.patch(`/trucks/${id}/`, { [field]: dateStr || null });
+      loadVehicles();
+    } catch (err: any) {
+      alert("Failed to update date: " + err.message);
+    }
+  };
+
   const maintenanceItems = vehicles.map((v) => {
     const today = new Date();
-    const randomDays = Math.floor(Math.random() * 60) - 15;
-    const serviceDate = new Date(today.getTime() + randomDays * 86400000);
-    const insuranceDays = Math.floor(Math.random() * 90) + 10;
-    const fitnessDays = Math.floor(Math.random() * 120) + 5;
+    
+    const serviceDate = v.next_service_date ? new Date(v.next_service_date) : null;
+    const insuranceDate = v.insurance_expiry_date ? new Date(v.insurance_expiry_date) : null;
+    const fitnessDate = v.fitness_cert_expiry_date ? new Date(v.fitness_cert_expiry_date) : null;
+
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 86400000);
 
     return {
       id: v.id,
       vehicle: v.registration_number || v.vehicle_number || `Vehicle #${v.id}`,
       type: v.vehicle_type || "Truck",
+      
       nextService: serviceDate,
-      serviceOverdue: randomDays < 0,
-      insuranceExpiry: new Date(today.getTime() + insuranceDays * 86400000),
-      insuranceUrgent: insuranceDays < 30,
-      fitnessExpiry: new Date(today.getTime() + fitnessDays * 86400000),
-      fitnessUrgent: fitnessDays < 30,
+      nextServiceStr: v.next_service_date || "",
+      serviceOverdue: serviceDate ? serviceDate < today : false,
+
+      insuranceExpiry: insuranceDate,
+      insuranceStr: v.insurance_expiry_date || "",
+      insuranceUrgent: insuranceDate ? insuranceDate < thirtyDaysFromNow : false,
+
+      fitnessExpiry: fitnessDate,
+      fitnessStr: v.fitness_cert_expiry_date || "",
+      fitnessUrgent: fitnessDate ? fitnessDate < thirtyDaysFromNow : false,
     };
   });
 
@@ -114,21 +130,36 @@ export default function MaintenancePage() {
                     <td className="px-5 py-3.5">
                       <div className={`flex items-center gap-1.5 ${m.serviceOverdue ? "text-red-500" : "text-brand-text"}`}>
                         {m.serviceOverdue ? <AlertTriangle size={13} /> : <CheckCircle2 size={13} className="text-emerald-500" />}
-                        <span className="font-medium">{m.nextService.toLocaleDateString()}</span>
+                        <input 
+                          type="date" 
+                          value={m.nextServiceStr} 
+                          onChange={(e) => handleDateChange(m.id, 'next_service_date', e.target.value)}
+                          className="bg-transparent font-medium focus:outline-none cursor-pointer"
+                        />
                       </div>
                       {m.serviceOverdue && <p className="text-[10px] text-red-400 mt-0.5">Overdue!</p>}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className={`flex items-center gap-1.5 ${m.insuranceUrgent ? "text-amber-600" : "text-brand-text"}`}>
                         {m.insuranceUrgent ? <Clock size={13} /> : <Shield size={13} className="text-emerald-500" />}
-                        <span className="font-medium">{m.insuranceExpiry.toLocaleDateString()}</span>
+                        <input 
+                          type="date" 
+                          value={m.insuranceStr} 
+                          onChange={(e) => handleDateChange(m.id, 'insurance_expiry_date', e.target.value)}
+                          className="bg-transparent font-medium focus:outline-none cursor-pointer"
+                        />
                       </div>
                       {m.insuranceUrgent && <p className="text-[10px] text-amber-500 mt-0.5">Expiring soon</p>}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className={`flex items-center gap-1.5 ${m.fitnessUrgent ? "text-amber-600" : "text-brand-text"}`}>
                         {m.fitnessUrgent ? <Clock size={13} /> : <Calendar size={13} className="text-emerald-500" />}
-                        <span className="font-medium">{m.fitnessExpiry.toLocaleDateString()}</span>
+                        <input 
+                          type="date" 
+                          value={m.fitnessStr} 
+                          onChange={(e) => handleDateChange(m.id, 'fitness_cert_expiry_date', e.target.value)}
+                          className="bg-transparent font-medium focus:outline-none cursor-pointer"
+                        />
                       </div>
                       {m.fitnessUrgent && <p className="text-[10px] text-amber-500 mt-0.5">Expiring soon</p>}
                     </td>

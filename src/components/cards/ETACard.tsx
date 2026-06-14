@@ -1,19 +1,52 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRealtimeStore } from "@/store/realtimeStore";
+import api from "@/lib/api";
 
 export default function ETACard() {
   const activeShipments = useRealtimeStore((state) => state.activeShipments);
+  const updateShipment = useRealtimeStore((state) => state.updateShipment);
   
+  useEffect(() => {
+    // Fetch initial shipments
+    const fetchShipments = async () => {
+      try {
+        const res = await api.get("/shipments/");
+        const list = Array.isArray(res.data) ? res.data : res.data.results || [];
+        list.forEach((s: any) => updateShipment(s));
+      } catch (err) {
+        console.error("Failed to load shipments:", err);
+      }
+    };
+    fetchShipments();
+  }, [updateShipment]);
+
   // For a driver, there is typically only 1 active shipment assignment
   const currentShipment = activeShipments[0];
 
-  const destination = currentShipment?.warehouse_name || "Bhiwandi Central Hub";
-  const origin = currentShipment?.factory_name || "Pune Factory";
+  const destination = currentShipment?.destination_warehouse_name || currentShipment?.warehouse_name || "Unassigned";
+  const origin = currentShipment?.factory_name || "Unassigned";
   
+  let hours = "02";
+  let minutes = "45";
+  if (currentShipment?.expected_arrival_time) {
+    const etaDate = new Date(currentShipment.expected_arrival_time);
+    const diffMs = Math.max(0, etaDate.getTime() - Date.now());
+    hours = Math.floor(diffMs / (1000 * 60 * 60)).toString().padStart(2, '0');
+    minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+  } else if (currentShipment?.eta) {
+    // eta is often "X hrs"
+    const parsedHours = parseInt(currentShipment.eta);
+    if (!isNaN(parsedHours)) {
+      hours = parsedHours.toString().padStart(2, '0');
+      minutes = "00";
+    }
+  }
+
   // Mock telemetry data for ETA (we would calculate this from distance in production)
-  const progressPercent = 70; 
+  const progressPercent = currentShipment ? 70 : 0; 
 
   return (
     <motion.div
@@ -32,9 +65,9 @@ export default function ETACard() {
         {/* ETA Section */}
         <div className="flex items-end justify-between">
           <div className="flex items-baseline gap-1 text-brand-text">
-            <span className="text-[4.5rem] font-light leading-none tracking-tighter">02</span>
+            <span className="text-[4.5rem] font-light leading-none tracking-tighter">{hours}</span>
             <span className="text-xl font-medium mb-1">h</span>
-            <span className="text-[4.5rem] font-light leading-none tracking-tighter ml-2">45</span>
+            <span className="text-[4.5rem] font-light leading-none tracking-tighter ml-2">{minutes}</span>
             <span className="text-xl font-medium mb-1">m</span>
           </div>
           <div className="text-right text-brand-text/70 text-sm font-medium leading-tight mb-2">
@@ -66,7 +99,7 @@ export default function ETACard() {
         {/* Footer Info */}
         <div className="flex justify-between items-center text-xs font-medium text-brand-text/60">
           <span>Origin: {origin}</span>
-          <span>Distance: 184 km left</span>
+          <span>Distance: {currentShipment?.total_distance_km || 0} km left</span>
         </div>
       </div>
     </motion.div>

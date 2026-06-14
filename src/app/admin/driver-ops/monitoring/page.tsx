@@ -83,10 +83,10 @@ export default function DriverMonitoringPage() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-brand-orange/10 text-brand-orange font-bold rounded-xl flex items-center justify-center text-sm">
-                      {d.first_name?.[0]}{d.last_name?.[0]}
+                      {d.user_name ? d.user_name.substring(0, 2).toUpperCase() : "DR"}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-brand-text">{d.first_name} {d.last_name}</p>
+                      <p className="text-sm font-semibold text-brand-text">{d.user_name || `Driver #${d.id}`}</p>
                       <p className="text-xs text-brand-muted">{d.phone || d.email}</p>
                     </div>
                   </div>

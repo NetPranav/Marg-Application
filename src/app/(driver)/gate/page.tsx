@@ -1,3 +1,5 @@
+"use client";
+
 import Header from "@/components/dashboard/Header";
 import GeofenceStatus from "@/components/gate/GeofenceStatus";
 import QRCard from "@/components/qr/QRCard";
@@ -5,13 +7,19 @@ import PayloadPanel from "@/components/qr/PayloadPanel";
 import DockAllocation from "@/components/gate/DockAllocation";
 import LiveQueue from "@/components/gate/LiveQueue";
 import BottomNav from "@/components/navigation/BottomNav";
+import { useRealtimeStore } from "@/store/realtimeStore";
 
 export default function GatePage() {
-  const qrPayload = JSON.stringify({
-    manifestId: "MX-88241",
-    vehicleMatch: "MH12AB4582",
-    destination: "WH-BAY-14"
-  });
+  const activeShipments = useRealtimeStore((state) => state.activeShipments);
+  const currentShipment = activeShipments[0];
+
+  const payloadData = {
+    manifestId: currentShipment?.shipment_number || "Loading...",
+    vehicleMatch: currentShipment?.truck_reg || "Loading...",
+    destination: "WH-BAY-14" // This would eventually come from dock reservation
+  };
+  
+  const qrPayload = JSON.stringify(payloadData);
 
   return (
     <main className="min-h-screen w-full max-w-md mx-auto bg-brand-bg relative overflow-hidden flex flex-col pt-2">
@@ -22,13 +30,7 @@ export default function GatePage() {
         
         <QRCard payload={qrPayload} />
         
-        <PayloadPanel 
-          data={{
-            manifestId: "MX-88241",
-            vehicleMatch: "MH12AB4582",
-            destination: "WH-BAY-14"
-          }} 
-        />
+        <PayloadPanel data={payloadData} />
         
         <DockAllocation />
         

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import api from "@/lib/api";
 import Link from "next/link";
 import { clsx } from "clsx";
 import {
@@ -55,6 +56,7 @@ const navGroups: NavGroup[] = [
       { label: "Available Requests", icon: ShoppingCart, href: "/admin/marketplace/requests" },
       { label: "Quotations", icon: FileText, href: "/admin/marketplace/quotations" },
       { label: "Active Negotiations", icon: Handshake, href: "/admin/marketplace/negotiations" },
+      { label: "Tie-Up Requests", icon: FileText, href: "/admin/shipments" },
     ],
   },
   {
@@ -107,6 +109,28 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [unreadNegotiations, setUnreadNegotiations] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await api.get("/logistics/chatrooms/");
+        const list = Array.isArray(res.data) ? res.data : res.data.results || [];
+        let count = 0;
+        list.forEach((room: any) => {
+          room.messages?.forEach((m: any) => {
+            if (!m.is_from_logistics && !m.read) count++;
+          });
+        });
+        setUnreadNegotiations(count);
+      } catch (err) {}
+    };
+    if (user?.role === "ADMIN") {
+      fetchUnread();
+      const int = setInterval(fetchUnread, 10000);
+      return () => clearInterval(int);
+    }
+  }, [user]);
 
   const toggleGroup = (title: string) => {
     setCollapsed((prev) => ({ ...prev, [title]: !prev[title] }));
@@ -169,8 +193,22 @@ export default function AdminSidebar() {
                             : "text-brand-muted hover:bg-black/[0.03] hover:text-brand-text"
                         )}
                       >
-                        <Icon size={16} strokeWidth={isActive ? 2.5 : 1.8} />
-                        <span>{item.label}</span>
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-3">
+                            <Icon size={16} strokeWidth={isActive ? 2.5 : 1.8} />
+                            <span>{item.label}</span>
+                          </div>
+                          {item.label === "Active Negotiations" && unreadNegotiations > 0 && (
+                            <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">
+                              {unreadNegotiations}
+                            </span>
+                          )}
+                          {item.label === "Shipment Conversations" && (
+                            <span className="bg-brand-orange text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">
+                              1 New
+                            </span>
+                          )}
+                        </div>
                       </Link>
                     );
                   })}

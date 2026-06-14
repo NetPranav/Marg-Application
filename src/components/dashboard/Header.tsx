@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import Logo from "@/components/brand/Logo";
+import { useAuthStore } from "@/store/authStore";
 
 interface HeaderProps {
   statusText?: string;
@@ -12,6 +14,9 @@ export default function Header({
   statusText = "Signal Active", 
   statusColorClass = "bg-brand-cyan" 
 }: HeaderProps) {
+  const user = useAuthStore((state) => state.user);
+  const initials = user?.full_name ? user.full_name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) : "AV";
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -30,9 +35,9 @@ export default function Header({
 
       <div className="relative w-10 h-10 rounded-full overflow-hidden shadow-md border-2 border-white">
         {/* Placeholder avatar. In production, this would be the actual driver photo. */}
-        <div className="w-full h-full bg-brand-text flex items-center justify-center text-white text-sm font-semibold">
-          AV
-        </div>
+        <Link href="/profile" className="w-10 h-10 rounded-full bg-brand-text flex items-center justify-center text-white font-bold text-sm tracking-widest shadow-soft z-10 cursor-pointer hover:bg-brand-text/90 transition-colors">
+        {initials}
+      </Link>
       </div>
     </motion.header>
   );

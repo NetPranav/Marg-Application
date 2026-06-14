@@ -74,14 +74,14 @@ export default function DriverAccountsPage() {
     const password = generatePassword();
 
     try {
-      await api.post("/auth/register/", {
+      await api.post("/auth/provision/", {
         first_name: form.first_name,
         last_name: form.last_name,
         email: `${username}@driver.logimind.ai`,
-        phone: form.phone,
+        phone_number: form.phone,
         password,
-        password_confirm: password,
         role: "DRIVER",
+        license_number: form.license_number,
       });
 
       setCreatedCreds({ username, password });
@@ -104,9 +104,9 @@ export default function DriverAccountsPage() {
   };
 
   const filtered = drivers.filter(
-    (d) =>
-      `${d.first_name} ${d.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
-      d.phone?.includes(search)
+    (d: any) =>
+      (d.user_name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.user_phone || d.user_email || "").includes(search)
   );
 
   if (loading) {
@@ -145,8 +145,8 @@ export default function DriverAccountsPage() {
           <p className="text-sm text-emerald-700 mb-3">Share these credentials with the driver manually:</p>
           <div className="bg-white rounded-xl p-4 space-y-2 border border-emerald-200">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-brand-muted font-medium w-20">Username:</span>
-              <code className="text-sm font-mono text-brand-text">{createdCreds.username}</code>
+              <span className="text-xs text-brand-muted font-medium w-20">Email ID:</span>
+              <code className="text-sm font-mono text-brand-text">{createdCreds.username}@driver.logimind.ai</code>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-brand-muted font-medium w-20">Password:</span>
@@ -242,22 +242,22 @@ export default function DriverAccountsPage() {
           </div>
         ) : (
           <div className="divide-y divide-black/[0.03]">
-            {filtered.map((d) => (
+            {filtered.map((d: any) => (
               <div key={d.id} className="px-5 py-4 flex items-center gap-4 hover:bg-black/[0.01] transition-colors">
                 <div className="w-10 h-10 bg-blue-50 text-blue-600 font-bold rounded-xl flex items-center justify-center text-sm shrink-0">
-                  {d.first_name?.[0]}{d.last_name?.[0]}
+                  {d.user_name ? d.user_name.substring(0, 2).toUpperCase() : "DR"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-brand-text truncate">{d.first_name} {d.last_name}</p>
-                  <p className="text-xs text-brand-muted mt-0.5">{d.phone || d.email}</p>
+                  <p className="text-sm font-medium text-brand-text truncate">{d.user_name}</p>
+                  <p className="text-xs text-brand-muted mt-0.5">{d.user_phone || d.user_email}</p>
                 </div>
                 {d.assigned_vehicle && (
                   <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 flex items-center gap-1 shrink-0">
                     <Truck size={10} /> {d.assigned_vehicle}
                   </span>
                 )}
-                <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0 ${d.is_active !== false ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"}`}>
-                  {d.is_active !== false ? "Active" : "Inactive"}
+                <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0 ${d.is_available !== false ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"}`}>
+                  {d.is_available !== false ? "Active" : "Inactive"}
                 </span>
               </div>
             ))}

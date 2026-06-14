@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Home, Navigation, MessageSquare, FileText, RotateCcw, User } from "lucide-react";
+import { Home, Navigation, MessageSquare, QrCode, RotateCcw } from "lucide-react";
 import { clsx } from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,8 +9,8 @@ import { usePathname } from "next/navigation";
 const tabs = [
   { id: "home", label: "Home", icon: Home, href: "/" },
   { id: "trip", label: "Trip", icon: Navigation, href: "/cargo" },
-  { id: "messages", label: "Messages", icon: MessageSquare, href: "/gate" },
-  { id: "docs", label: "Docs", icon: FileText, href: "/market" },
+  { id: "messages", label: "Messages", icon: MessageSquare, href: "/messages" },
+  { id: "dock", label: "Dock", icon: QrCode, href: "/gate" },
   { id: "return", label: "Returns", icon: RotateCcw, href: "/earnings" },
 ];
 

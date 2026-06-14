@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { MessageSquare, Send, Package, Users, Clock, Search } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/api";
+import { useRealtimeStore } from "@/store/realtimeStore";
 
 interface Message {
   id: string;
@@ -43,6 +44,17 @@ export default function ConversationsPage() {
     } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
+  // Sync across tabs
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'logimind-realtime-storage') {
+        useRealtimeStore.persist.rehydrate();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
   const conversations: Conversation[] = shipments.map((s) => ({
     id: s.id.toString(),
     shipmentId: s.id,
@@ -57,27 +69,45 @@ export default function ConversationsPage() {
     c.trackingNumber.toLowerCase().includes(search.toLowerCase())
   );
 
+  const driverMessages = useRealtimeStore((state) => state.driverMessages) || [];
+  const addDriverMessage = useRealtimeStore((state) => state.addDriverMessage);
+
   const selectConversation = (id: string) => {
     setSelectedConvo(id);
-    const convo = conversations.find((c) => c.id === id);
-    if (convo) {
+  };
+
+  useEffect(() => {
+    if (selectedConvo) {
+      // Map shared store driverMessages to Admin message format
+      const mapped = driverMessages.map((m: any) => ({
+        id: m.id,
+        sender: m.sender === "driver" ? "Driver" : "Logistics Admin",
+        content: m.text,
+        time: new Date().toISOString(), // Using current for mock, normally parse m.time
+        isOwn: m.sender === "logistics",
+        isSystem: false,
+      }));
+      
+      const convo = conversations.find((c) => c.id === selectedConvo);
+      
       setMessages([
-        { id: "1", sender: "System", content: `Conversation started for Shipment ${convo.trackingNumber}`, time: convo.lastTime, isOwn: false, isSystem: true },
-        { id: "2", sender: "Factory Admin", content: `Shipment ${convo.trackingNumber} is ready for pickup. Please coordinate vehicle assignment.`, time: convo.lastTime, isOwn: false, isSystem: false },
+        { id: "sys-1", sender: "System", content: `Conversation started for Shipment ${convo?.trackingNumber || 'Active'}`, time: new Date().toISOString(), isOwn: false, isSystem: true },
+        ...mapped
       ]);
     }
-  };
+  }, [selectedConvo, driverMessages]);
 
   const sendMessage = () => {
     if (!newMessage.trim()) return;
-    setMessages((prev) => [...prev, {
-      id: Date.now().toString(),
-      sender: `${user?.first_name || "You"}`,
-      content: newMessage,
-      time: new Date().toISOString(),
-      isOwn: true,
-      isSystem: false,
-    }]);
+    
+    const newMsg = { 
+      id: Date.now().toString(), 
+      text: newMessage, 
+      sender: "logistics", 
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+    };
+    
+    addDriverMessage(newMsg);
     setNewMessage("");
   };
 

@@ -42,10 +42,10 @@ export default function EmployeesPage() {
   const handleAdd = async () => {
     setSaving(true);
     try {
-      await api.post("/auth/register/", {
+      await api.post("/auth/provision/", {
         ...form,
+        phone_number: form.phone,
         password: "Temp@" + Math.random().toString(36).slice(2, 8),
-        password_confirm: "Temp@" + Math.random().toString(36).slice(2, 8),
       });
       setShowForm(false);
       setForm({ first_name: "", last_name: "", email: "", phone: "", department: "", role: "EMPLOYEE" });

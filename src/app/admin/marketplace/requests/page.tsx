@@ -15,19 +15,28 @@ export default function MarketplaceRequestsPage() {
 
   const loadRequests = async () => {
     try {
-      const res = await api.get("/shipments/");
+      const res = await api.get("/shipments/lots/");
       const list = Array.isArray(res.data) ? res.data : res.data.results || [];
-      // Show shipments that are pending/approved (available for bidding)
-      setShipments(list.filter((s: any) => ["PENDING", "APPROVED", "DRAFT"].includes(s.status)));
+      // Show lots that are available for bidding
+      setShipments(list.filter((s: any) => s.status !== "ACCEPTED"));
     } catch (err) { console.error(err); } finally { setLoading(false); }
+  };
+
+  const handleIgnore = (id: number) => {
+    setShipments(shipments.filter(s => s.id !== id));
   };
 
   const handleSubmitQuote = async () => {
     if (!selectedShipment) return;
     setSubmitting(true);
     try {
-      // In production this would hit a quotation endpoint
-      console.log("Quote submitted:", { shipment: selectedShipment.id, ...quoteForm });
+      await api.post(`/shipments/lots/${selectedShipment.id}/submit-quote/`, {
+        bid_amount: quoteForm.price,
+        estimated_delivery_hours: parseInt(quoteForm.transit_time) || 24,
+        notes: `Conditions: ${quoteForm.conditions}`
+      });
+      // Remove the shipment from the list locally
+      setShipments(shipments.filter(s => s.id !== selectedShipment.id));
       setSelectedShipment(null);
       setQuoteForm({ price: "", transit_time: "", conditions: "" });
     } catch (err) { console.error(err); } finally { setSubmitting(false); }
@@ -73,14 +82,14 @@ export default function MarketplaceRequestsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   {s.total_weight && (
-                    <span className="flex items-center gap-1 text-xs text-brand-muted"><Weight size={11} />{s.total_weight} T</span>
+                    <span className="flex items-center gap-1 text-xs text-brand-muted"><Weight size={11} />{s.total_weight} kg</span>
                   )}
-                  {s.dispatch_date && (
-                    <span className="flex items-center gap-1 text-xs text-brand-muted"><Calendar size={11} />{new Date(s.dispatch_date).toLocaleDateString()}</span>
+                  {s.created_at && (
+                    <span className="flex items-center gap-1 text-xs text-brand-muted"><Calendar size={11} />{new Date(s.created_at).toLocaleDateString()}</span>
                   )}
                 </div>
-                {s.special_handling && (
-                  <p className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">⚠ {s.special_handling}</p>
+                {s.parcels?.some((p: any) => p.is_fragile) && (
+                  <p className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">⚠ Fragile items included</p>
                 )}
               </div>
 
@@ -91,8 +100,11 @@ export default function MarketplaceRequestsPage() {
                 >
                   <FileText size={14} /> Submit Quote
                 </button>
-                <button className="px-3 py-2.5 bg-black/[0.03] text-brand-muted rounded-xl text-sm font-medium hover:bg-black/[0.06] transition-colors">
-                  <Eye size={14} />
+                <button 
+                  onClick={() => handleIgnore(s.id)}
+                  className="px-4 py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <XIcon size={14} /> Ignore
                 </button>
               </div>
             </div>

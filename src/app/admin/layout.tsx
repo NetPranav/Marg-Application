@@ -1,5 +1,6 @@
 import AdminBottomNav from "@/components/admin/AdminBottomNav";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import HintManager from "@/components/admin/HintManager";
 
 export default function AdminLayout({
   children,
@@ -20,6 +21,7 @@ export default function AdminLayout({
 
       {/* Mobile Navigation */}
       <AdminBottomNav />
+      <HintManager />
     </div>
   );
 }
